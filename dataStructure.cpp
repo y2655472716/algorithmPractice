@@ -1,6 +1,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <memory>
+#include <vector>
+#include <random>
+#include <unordered_set>
 
 namespace SetAll
 {
@@ -99,14 +102,16 @@ namespace LRU
             std::weak_ptr<ListNode> pre;
             std::shared_ptr<ListNode> next;
 
-            ListNode(int k, int v) :key(k), val(v) {}
+            ListNode(int k, int v) : key(k), val(v) {}
         };
         class DoubleList
         {
             std::shared_ptr<ListNode> head;
             std::shared_ptr<ListNode> tail;
+
         public:
-            DoubleList(){
+            DoubleList()
+            {
                 head = std::make_shared<ListNode>(-1, -1);
                 tail = std::make_shared<ListNode>(-1, -1);
                 head->next = tail;
@@ -132,7 +137,7 @@ namespace LRU
                 int key = node->key;
                 head->next = node->next;
                 node->next->pre = head;
-                node->next=nullptr;
+                node->next = nullptr;
                 node->pre.reset();
                 return key;
             }
@@ -141,7 +146,7 @@ namespace LRU
             {
                 if (!node)
                     return;
-                
+
                 node->pre.lock()->next = node->next;
                 node->next->pre = node->pre;
 
@@ -163,7 +168,8 @@ namespace LRU
 
         int get(int key)
         {
-            if(map.find(key) == map.end())return -1;
+            if (map.find(key) == map.end())
+                return -1;
 
             auto node = map[key];
             list.moveToTail(node);
@@ -172,17 +178,23 @@ namespace LRU
 
         void put(int key, int value)
         {
-            if(map.find(key) != map.end()){
+            if (map.find(key) != map.end())
+            {
                 auto node = map[key];
                 node->val = value;
                 list.moveToTail(node);
-            }else{
+            }
+            else
+            {
                 auto node = std::make_shared<ListNode>(key, value);
-                if(size < capacity){
+                if (size < capacity)
+                {
                     list.putTail(node);
                     size++;
                     map[key] = node;
-                }else{
+                }
+                else
+                {
                     int removeKey = list.removeHead();
                     map.erase(removeKey);
 
@@ -194,6 +206,132 @@ namespace LRU
     };
 }
 
+namespace RandomizedSet
+{
+    class RandomizedSet
+    {
+        std::unordered_map<int, int> map;
+        std::vector<int> value;
+
+    public:
+        RandomizedSet()
+        {
+        }
+
+        bool insert(int val)
+        {
+            if (map.find(val) != map.end())
+            {
+                return false;
+            }
+            map[val] = map.size();
+            value.push_back(val);
+            return true;
+        }
+
+        bool remove(int val)
+        {
+            if (map.find(val) == map.end())
+            {
+                return false;
+            }
+
+            int index = map[val];
+            int lastValue = value.back();
+            value[index] = lastValue;
+            map[lastValue] = index;
+            map.erase(val);
+            value.pop_back();
+            return true;
+        }
+
+        int getRandom()
+        {
+            if (map.empty())
+                return INT_MIN;
+            std::random_device rd;
+            std::mt19937 gen(rd());
+
+            std::uniform_int_distribution<int> dist(0, (map.size() - 1));
+            return value[dist(gen)];
+        }
+    };
+
+}
+
+namespace RandomizedCollection
+{
+    class RandomizedCollection
+    {
+        std::unordered_map<int, std::unordered_set<int>> map;
+        std::vector<int> values;
+
+    public:
+        RandomizedCollection()
+        {
+        }
+
+        bool insert(int val)
+        {
+            int index = values.size();
+            values.push_back(val);
+            if (map.find(val) == map.end())
+            {
+                map[val] = std::unordered_set<int>();
+                map[val].insert(index);
+                return true;
+            }
+            else
+            {
+                map[val].insert(index);
+                return false;
+            }
+        }
+
+        bool remove(int val)
+        {
+            if (map.find(val) == map.end())
+                return false;
+            int index = *map[val].begin();
+            int lastIndex = values.size() - 1;
+            int tempValue = values.back();
+            values[index] = tempValue;
+            map[val].erase(index);
+            if (index != lastIndex)
+            {
+                map[tempValue].insert(index);
+                map[tempValue].erase(lastIndex);
+            }
+
+            values.pop_back();
+            if (map[val].empty())
+            {
+                map.erase(val);
+            }
+            return true;
+        }
+
+        int getRandom()
+        {
+            if (values.empty())
+                return -1;
+
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<int> dist(0, values.size() - 1);
+
+            return values[dist(gen)];
+        }
+    };
+}
+
 int main()
 {
+    RandomizedSet::RandomizedSet set;
+    std::cout << set.remove(0) << std::endl;
+    std::cout << set.remove(0) << std::endl;
+    std::cout << set.insert(0) << std::endl;
+    std::cout << set.getRandom() << std::endl;
+    std::cout << set.remove(0) << std::endl;
+    std::cout << set.insert(0) << std::endl;
 }
