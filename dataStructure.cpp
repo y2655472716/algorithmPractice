@@ -5,6 +5,7 @@
 #include <random>
 #include <unordered_set>
 #include <queue>
+#include <stack>
 
 namespace SetAll
 {
@@ -333,6 +334,7 @@ namespace MedianFinder
         std::priority_queue<int, std::vector<int>, std::less<int>> low;
         std::priority_queue<int, std::vector<int>, std::greater<int>> high;
         double median{};
+
     public:
         MedianFinder()
         {
@@ -340,21 +342,28 @@ namespace MedianFinder
 
         void addNum(int num)
         {
-            if(low.empty() || num >= low.top()){
+            if (low.empty() || num >= low.top())
+            {
                 high.push(num);
-            }else{
+            }
+            else
+            {
                 low.push(num);
             }
 
             int lowSize = low.size();
             int highSize = high.size();
             int diff = std::abs(lowSize - highSize);
-            if(diff >= 2){
-                if(highSize > lowSize){
+            if (diff >= 2)
+            {
+                if (highSize > lowSize)
+                {
                     int temp = high.top();
                     high.pop();
                     low.push(temp);
-                }else{
+                }
+                else
+                {
                     int temp = low.top();
                     low.pop();
                     high.push(temp);
@@ -369,30 +378,225 @@ namespace MedianFinder
             return median;
         }
 
-        void calculateMedian(){
+        void calculateMedian()
+        {
             int lowSize = low.size();
             int highSize = high.size();
             int diff = std::abs(lowSize - highSize);
-            if(diff == 0){
+            if (diff == 0)
+            {
                 median = (static_cast<double>(low.top()) + high.top()) / 2;
-            }else{
+            }
+            else
+            {
                 median = highSize > lowSize ? high.top() : low.top();
             }
         }
     };
 }
 
+namespace FreqStack
+{
+    class FreqStack
+    {
+        std::vector<std::vector<int>> st;
+        std::unordered_map<int, int> wordFreq;
+        int maxTime{};
+
+    public:
+        FreqStack()
+        {
+            maxTime = 0;
+            wordFreq.clear();
+            st.clear();
+            st.emplace_back();
+        }
+
+        void push(int val)
+        {
+            wordFreq[val]++;
+            if (maxTime <= wordFreq[val])
+            {
+                maxTime = wordFreq[val];
+            }
+
+            if (wordFreq[val] >= st.size())
+            {
+                st.emplace_back(std::vector<int>(1, val));
+            }
+            else
+            {
+                st[wordFreq[val]].emplace_back(val);
+            }
+        }
+
+        int pop()
+        {
+            if (wordFreq.empty())
+                return INT_MIN;
+
+            int ans = st[maxTime].back();
+            st[maxTime].pop_back();
+            wordFreq[ans]--;
+            if (wordFreq[ans] == 0)
+                wordFreq.erase(ans);
+
+            if (st[maxTime].empty())
+            {
+                st.pop_back();
+                maxTime--;
+            }
+
+            return ans;
+        }
+    };
+}
+
+namespace AllOne
+{
+    class AllOne
+    {
+        class Bucket{
+        public:
+            int fre{};
+            std::unordered_set<std::string> set;
+            Bucket* pre{};
+            Bucket* next{};
+
+            Bucket(int f) : fre(f){
+            }
+            ~Bucket(){
+                pre = nullptr;
+                next = nullptr;
+                fre = 0;
+                set.clear();
+            }
+        };
+        Bucket* head{};
+        Bucket* tail{};
+        std::unordered_map<std::string, Bucket*> map;
+    public:
+        AllOne()
+        {
+            head = new Bucket(0);
+            tail = new Bucket(INT_MAX);
+            head->next = tail;
+            tail->pre = head;
+            head->set.insert("");
+            tail->set.insert("");
+        }
+
+        ~AllOne(){
+            while(head){
+                auto next = head->next;
+                delete head;
+                head = next;
+            }
+            head = nullptr;
+            tail = nullptr;
+            map.clear();
+        }
+
+        void inc(std::string key)
+        {
+            if(map.find(key) == map.end()){
+                Bucket* bucket{};
+                if(head->next->fre == 1){
+                    bucket = head->next;
+                }else{
+                    bucket = new Bucket(1);
+                    head->next->pre = bucket;
+                    bucket->next = head->next;
+                    head->next = bucket;
+                    bucket->pre = head;
+                }
+                bucket->set.insert(key);
+                map[key] = bucket;
+            }else{
+                Bucket* bucket = map[key];
+                if(bucket->next->fre != bucket->fre + 1){
+                    Bucket* nextBucket = new Bucket(bucket->fre + 1);
+                    nextBucket->next = bucket->next;
+                    nextBucket->pre = bucket;
+                    bucket->next->pre = nextBucket;
+                    bucket->next = nextBucket;
+                }
+                bucket->set.erase(key);
+                bucket->next->set.insert(key);
+                map[key] = bucket->next;
+                if(bucket->set.empty()){
+                    bucket->pre->next = bucket->next;
+                    bucket->next->pre = bucket->pre;
+                    delete bucket;
+                }
+            }
+        }
+
+        void dec(std::string key)
+        {
+            if(map.find(key) == map.end()){
+                return;
+            }
+
+            Bucket* bucket = map[key];
+            if(bucket->fre == 1){
+                bucket->set.erase(key);
+                map.erase(key);
+                if(bucket->set.empty()){
+                    bucket->next->pre = bucket->pre;
+                    bucket->pre->next = bucket->next;
+                    delete bucket;
+                }
+                return;
+            }
+            if(bucket->pre->fre != bucket->fre - 1){
+                Bucket* preBucket = new Bucket(bucket->fre - 1);
+                preBucket->next = bucket;
+                preBucket->pre = bucket->pre;
+                bucket->pre->next = preBucket;
+                bucket->pre = preBucket;
+            }
+
+            bucket->set.erase(key);
+            bucket->pre->set.insert(key);
+            map[key] = bucket->pre;
+            if(bucket->set.empty()){
+                bucket->next->pre = bucket->pre;
+                bucket->pre->next = bucket->next;
+                delete bucket;
+            }
+        }
+
+        std::string getMaxKey()
+        {
+            if(tail->pre == head)return "";
+
+            return *(tail->pre->set.begin());
+        }
+
+        std::string getMinKey()
+        {
+            if(head->next == tail)return "";
+            
+            return *(head->next->set.begin());
+        }
+    };
+}
+
 int main()
 {
-    MedianFinder::MedianFinder mf;
-    mf.addNum(-1);
-    std::cout << mf.findMedian() << std::endl;
-    mf.addNum(-2);
-    std::cout << mf.findMedian() << std::endl;
-    mf.addNum(-3);
-    std::cout << mf.findMedian() << std::endl;
-    mf.addNum(-4);
-    std::cout << mf.findMedian() << std::endl;
-    mf.addNum(-5);
-    std::cout << mf.findMedian() << std::endl;
+    AllOne::AllOne ao;
+    ao.inc("hello");
+    ao.inc("goodbye");
+    ao.inc("hello");
+    ao.inc("hello");
+    std::cout << ao.getMaxKey() << std::endl;
+    ao.inc("leet");
+    ao.inc("code");
+    ao.inc("leet");
+    ao.dec("hello");
+    ao.inc("leet");
+    ao.inc("code");
+    ao.inc("code");
+    std::cout << ao.getMaxKey() << std::endl;
 }
