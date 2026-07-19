@@ -4,6 +4,7 @@
 #include <vector>
 #include <random>
 #include <unordered_set>
+#include <queue>
 
 namespace SetAll
 {
@@ -325,13 +326,73 @@ namespace RandomizedCollection
     };
 }
 
+namespace MedianFinder
+{
+    class MedianFinder
+    {
+        std::priority_queue<int, std::vector<int>, std::less<int>> low;
+        std::priority_queue<int, std::vector<int>, std::greater<int>> high;
+        double median{};
+    public:
+        MedianFinder()
+        {
+        }
+
+        void addNum(int num)
+        {
+            if(low.empty() || num >= low.top()){
+                high.push(num);
+            }else{
+                low.push(num);
+            }
+
+            int lowSize = low.size();
+            int highSize = high.size();
+            int diff = std::abs(lowSize - highSize);
+            if(diff >= 2){
+                if(highSize > lowSize){
+                    int temp = high.top();
+                    high.pop();
+                    low.push(temp);
+                }else{
+                    int temp = low.top();
+                    low.pop();
+                    high.push(temp);
+                }
+            }
+
+            calculateMedian();
+        }
+
+        double findMedian()
+        {
+            return median;
+        }
+
+        void calculateMedian(){
+            int lowSize = low.size();
+            int highSize = high.size();
+            int diff = std::abs(lowSize - highSize);
+            if(diff == 0){
+                median = (static_cast<double>(low.top()) + high.top()) / 2;
+            }else{
+                median = highSize > lowSize ? high.top() : low.top();
+            }
+        }
+    };
+}
+
 int main()
 {
-    RandomizedSet::RandomizedSet set;
-    std::cout << set.remove(0) << std::endl;
-    std::cout << set.remove(0) << std::endl;
-    std::cout << set.insert(0) << std::endl;
-    std::cout << set.getRandom() << std::endl;
-    std::cout << set.remove(0) << std::endl;
-    std::cout << set.insert(0) << std::endl;
+    MedianFinder::MedianFinder mf;
+    mf.addNum(-1);
+    std::cout << mf.findMedian() << std::endl;
+    mf.addNum(-2);
+    std::cout << mf.findMedian() << std::endl;
+    mf.addNum(-3);
+    std::cout << mf.findMedian() << std::endl;
+    mf.addNum(-4);
+    std::cout << mf.findMedian() << std::endl;
+    mf.addNum(-5);
+    std::cout << mf.findMedian() << std::endl;
 }
