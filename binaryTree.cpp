@@ -4,6 +4,7 @@
 #include <sstream>
 #include <queue>
 #include <unordered_map>
+#include <algorithm>
 struct TreeNode
 {
     int val;
@@ -404,13 +405,172 @@ namespace CountNodes{
     }
 }
 
+namespace LCA{
+    TreeNode* lowestCommonAncestor1(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(!root || root == p || root == q){
+            return root;
+        }
+
+        auto l = lowestCommonAncestor1(root->left, p, q);
+        auto r = lowestCommonAncestor1(root->right, p,q);
+        if(l && r){
+            return root;
+        }
+
+        if(!l && !r){
+            return nullptr;
+        }
+
+        return l ? l : r;
+    }
+
+    TreeNode* lowestCommonAncestor2(TreeNode* root, TreeNode* p, TreeNode* q){
+        
+        while(root->val != p->val && root->val != q->val){
+            if(root->val > std::min(p->val, q->val) && root->val < std::max(p->val, q->val)){
+                break;
+            }
+
+            root = root->val < std::min(p->val, q->val) ? root->right : root->left;
+        }
+        return root;
+    }
+}
+
+namespace PathSum{
+
+    void f(TreeNode* root, int sum, std::vector<std::vector<int>>& ans, std::vector<int>& path){
+        sum -= root->val;
+        path.push_back(root->val);
+        if(!root->left && !root->right){
+            if(sum == 0){
+                ans.push_back(path);
+            }
+        }else{
+            if(root->left){
+                f(root->left, sum, ans, path);
+            }
+        
+            if(root->right){
+                f(root->right, sum, ans, path);
+            }
+        }
+        path.pop_back();
+    }
+
+    std::vector<std::vector<int>> pathSum(TreeNode* root, int targetSum) {
+        if(!root)return {};
+
+        std::vector<std::vector<int>> ans;
+        std::vector<int> path;
+        f(root, targetSum, ans, path);
+        return ans;
+    }
+}
+
+namespace IsBalanced{
+
+    int height(TreeNode* root, bool& balance){
+        if(!balance || !root){
+            return 0;
+        }
+
+        int lh = height(root->left, balance);
+        int rh = height(root->right, balance);
+        if(std::abs(lh - rh) > 1){
+            balance = false;
+            return 0;
+        }
+
+        return std::max(lh, rh) + 1;
+    }
+
+    bool isBalanced(TreeNode* root) {
+        bool balance = true;
+        height(root, balance);
+        return balance;
+    }
+}
+
+namespace IsValidBST{
+    long max = LONG_MIN, min = LONG_MAX;
+    bool isValidBST(TreeNode* root) {
+        if(!root){
+            max = LONG_MIN;
+            min = LONG_MAX;
+            return true;
+        }
+
+        bool lok = isValidBST(root->left);
+        long lmax = max;
+        long lmin = min;
+        bool rok = isValidBST(root->right);
+        long rmax = max;
+        long rmin = min;
+
+        min = std::min({lmin, rmin, static_cast<long>(root->val)});
+        max = std::max({lmax, rmax, static_cast<long>(root->val)});
+        return lok && rok && root->val > lmax && root->val < rmin;
+    }
+}
+
+namespace TrimBST{
+
+    TreeNode* f(TreeNode* root, int l, int r){
+        if(!root)return nullptr;
+
+        if(root->val < l){
+            return f(root->right, l, r);
+        }
+
+        if(root->val > r){
+            return f(root->left, l, r);
+        }
+
+        root->left = f(root->left, l, r);
+        root->right = f(root->right, l, r);
+        return root;
+    }
+
+    TreeNode* trimBST(TreeNode* root, int low, int high){
+        if(!root)return nullptr;
+
+        TreeNode* ans = f(root, low, high);
+        return ans;
+    }
+}
+
+namespace Rob{
+    int yes{}, no{};
+
+    void f(TreeNode* root){
+        if(!root){
+            yes = 0;
+            no = 0;
+        }else{
+            int cyes = root->val;
+            int cno = 0;
+            f(root->left);
+            cyes += no;
+            cno += std::max(yes, no);
+            f(root->right);
+            cyes += no;
+            cno += std::max(yes, no);
+            yes = cyes;
+            no = cno;
+        }
+    }
+
+    int rob(TreeNode* root) {
+        f(root);
+        return std::max(yes, no);
+    }
+}
+
 int main()
 {
-    // TreeNode *root = new TreeNode(1);
-    // root->left = new TreeNode(2);
-    // root->right = new TreeNode(3);
-    // root->right->left = new TreeNode(4);
-    // std::cout << Codec2::Codec().serialize(root) << std::endl;
-    TreeNode *root = Codec2::Codec().deserialize("1,2,3,#,#,4,#,#,#,");
+    TreeNode* root = new TreeNode(1);
+    root->right = new TreeNode(2);
+    TreeNode* a = TrimBST::trimBST(root, 2, 4);
     std::cout << std::endl;
 }
