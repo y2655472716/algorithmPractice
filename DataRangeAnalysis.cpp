@@ -4,9 +4,9 @@
 #include <cmath>
 
 namespace KillMonster{
-    #define MAX 11
-    std::vector<int> skills(MAX, 0);
-    std::vector<int> bloods(MAX, 0);
+    #define T_MAX 11
+    std::vector<int> skills(T_MAX, 0);
+    std::vector<int> bloods(T_MAX, 0);
 
     void swap(int i, int j){
         int temp = skills[i];

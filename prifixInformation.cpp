@@ -25,8 +25,8 @@ namespace NumArray
 
 namespace LongestSubArray
 {
-#define MAX 100001
-    std::vector<int> nums(MAX);
+#define T_MAX 100001
+    std::vector<int> nums(T_MAX);
     int getAnswer(const int n, int aim)
     {
         int sum{};
@@ -94,8 +94,8 @@ namespace SubarraySum
 
 namespace LongestBalancedSubArray
 {
-#define MAX 100001
-    std::vector<int> nums(MAX);
+#define T_MAX 100001
+    std::vector<int> nums(T_MAX);
     int longestBalancedSubArray(int n)
     {
         int ans{};

@@ -111,11 +111,11 @@ namespace Trie1{
 }
 
 namespace Trie2{
-    #define MAX 200000
+    #define T_MAX 200000
     #define CHARACTER 26
-    std::vector<std::vector<int>> trie(MAX, std::vector<int>(CHARACTER));
-    std::vector<int> pass(MAX);
-    std::vector<int> end(MAX);
+    std::vector<std::vector<int>> trie(T_MAX, std::vector<int>(CHARACTER));
+    std::vector<int> pass(T_MAX);
+    std::vector<int> end(T_MAX);
 
     class Trie{
         int cnt = 1;
